@@ -214,11 +214,8 @@ select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 <div class="ci" style="border:none;padding:0 0 16px"><input type="checkbox" id="agr">
 <label for="agr" style="font-size:13px;line-height:1.6">上記の内容に相違ありません。情報提供と指導の内容を理解し、結果を薬局に送信することに同意します。</label></div>
 
-<label class="fl">お名前（カタカナ）</label>
-<input type="text" class="fi" id="uName" placeholder="ヤマダ ハナコ">
-
 <label class="fl">お名前（漢字）</label>
-<input type="text" class="fi" id="uNameKanji" placeholder="山田 花子">
+<input type="text" class="fi" id="uName" placeholder="山田 花子">
 
 <label class="fl">来局予定（第1候補）</label>
 <input type="datetime-local" class="fi" id="visitTime1" step="1800">
@@ -305,7 +302,7 @@ select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 </div></div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbznQW-HTf0grm0_NTL1RImlsxWwiRrvdsHFrbQkDJiCpr2h6wlaiZcXR9DNJbAhZaNc/exec';
+const GAS_URL ='https://script.google.com/macros/s/AKfycbznQW-HTf0grm0_NTL1RImlsxWwiRrvdsHFrbQkDJiCpr2h6wlaiZcXR9DNJbAhZaNc/exec';
 const STEPS=14;
 const SEC_KEY='近見調剤-ec-7817';
 const startTime=Date.now();
@@ -377,9 +374,8 @@ async function submit(){
   const visitTime1=document.getElementById('visitTime1').value||'';
   const visitTime2=document.getElementById('visitTime2').value||'';
   const visitTime3=document.getElementById('visitTime3').value||'';
-  const nameKanji=document.getElementById('uNameKanji').value.trim();
   const payload={
-    name, nameKanji, visitTime1, visitTime2, visitTime3, signature:sig, age:D.age,
+    name, visitTime1, visitTime2, visitTime3, signature:sig, age:D.age,
     periodDate:D.pd, periodCycle:D.pc, periodAmt:D.pa,
     sex3w:D.sx.s3w, sex3o:D.sx.s3o, sexWorry:D.sx.swr,
     priorUse:D.pu, nursing:D.nursing, japan:D.jp,
