@@ -214,12 +214,25 @@ select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 <div class="ci" style="border:none;padding:0 0 16px"><input type="checkbox" id="agr">
 <label for="agr" style="font-size:13px;line-height:1.6">上記の内容に相違ありません。情報提供と指導の内容を理解し、結果を薬局に送信することに同意します。</label></div>
 
-<label class="fl">お名前（カタカナ）</label>
-<input type="text" class="fi" id="uName" placeholder="ヤマダ ハナコ">
+<label class="fl">お名前（漢字）</label>
+<input type="text" class="fi" id="uName" placeholder="山田 花子">
 
-<label class="fl">来局予定日時（任意）</label>
-<input type="datetime-local" class="fi" id="visitTime" style="margin-bottom:2px">
-<p style="font-size:11px;color:#aaa;margin-bottom:10px">未定の場合は空欄でOKです</p>
+<label class="fl">電話番号</label>
+<input type="tel" class="fi" id="uPhone" placeholder="090-1234-5678" inputmode="tel">
+
+<label class="fl">来局予定（第1候補）</label>
+<input type="datetime-local" class="fi" id="visitTime1" step="1800">
+
+<label class="fl">来局予定（第2候補）</label>
+<input type="datetime-local" class="fi" id="visitTime2" step="1800">
+
+<label class="fl">来局予定（第3候補）</label>
+<input type="datetime-local" class="fi" id="visitTime3" step="1800" style="margin-bottom:2px">
+<p style="font-size:11px;color:#aaa;margin-bottom:10px">未定の場合は空欄でOKです（30分間隔）</p>
+
+<div style="background:#FFF0EF;border:2px solid #C85A54;border-radius:10px;padding:12px;margin-bottom:14px">
+<p style="color:#C85A54;font-size:13px;font-weight:700;line-height:1.6">⚠ 薬剤師の勤務状況によっては対応が困難な場合もあります</p>
+</div>
 
 <label class="fl">署名（指でサイン）</label>
 <div class="sig-wrap" id="sigW"><canvas id="sigC" height="150"></canvas><button class="sig-clear" onclick="clrSig()">クリア</button></div>
@@ -292,11 +305,18 @@ select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 </div></div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzL-bObaGINy2ruc6KJUWR36FA3vO3kV3q_XDd75-VoILy4Nm06D1sdGHkhObkVriU7/exec';
-
+const GAS_URL ='https://script.google.com/macros/s/AKfycbznQW-HTf0grm0_NTL1RImlsxWwiRrvdsHFrbQkDJiCpr2h6wlaiZcXR9DNJbAhZaNc/exec';
 const STEPS=14;
-const SEC_KEY='近見調剤-ec-7817';
+// 🔐 トークン認証：URLクエリ ?t=xxxx から取得（公式LINE配布URL専用）
+const FORM_TOKEN=(new URLSearchParams(location.search)).get('t')||'';
 const startTime=Date.now();
+// トークンなしアクセスを拒否
+if(!FORM_TOKEN){
+  document.addEventListener('DOMContentLoaded',function(){
+    document.body.innerHTML='<div style="max-width:480px;margin:60px auto;padding:30px;background:#fff;border:2px solid #c0392b;border-radius:10px;text-align:center;font-family:sans-serif"><h2 style="color:#c0392b;margin-bottom:12px">⚠ 無効なアクセスです</h2><p style="line-height:1.7">このフォームは近見調剤薬局の<strong>公式LINE</strong>からご案内したURL専用です。<br><br>公式LINEで予約を行い、<br>そちらに届くリンクからアクセスしてください。</p><p style="margin-top:16px"><a href="tel:096-274-5381" style="color:#2a6fb5">📞 近見調剤薬局 096-274-5381</a></p></div>';
+  });
+  throw new Error('missing token');
+}
 let D={nursing:false,age:'',ct:[],sx:{},pr:false,pu:false,jp:true,pd:'',pc:'',pa:''};
 let hasSig=false;
 
@@ -323,8 +343,16 @@ function getLines(){return[
   '3週間後の日本滞在：'+(D.jp?'はい':'不明')
 ]}
 function buildPvw(){
-  const vt=document.getElementById('visitTime').value;
-  let h=getLines().join('<br>')+(vt?'<br><strong>来局予定：</strong>'+vt.replace('T',' '):'');
+  const ph=document.getElementById('uPhone').value;
+  const v1=document.getElementById('visitTime1').value;
+  const v2=document.getElementById('visitTime2').value;
+  const v3=document.getElementById('visitTime3').value;
+  let vtHtml='';
+  if(ph)vtHtml+='<br><strong>電話番号：</strong>'+ph;
+  if(v1)vtHtml+='<br><strong>来局予定(第1候補)：</strong>'+v1.replace('T',' ');
+  if(v2)vtHtml+='<br><strong>来局予定(第2候補)：</strong>'+v2.replace('T',' ');
+  if(v3)vtHtml+='<br><strong>来局予定(第3候補)：</strong>'+v3.replace('T',' ');
+  let h=getLines().join('<br>')+vtHtml;
   if(D.ct.length)h+='<br><br><strong>注意事項：</strong>'+D.ct.join('、');
   if(D.sx.s3o==='yes'&&D.sx.s3w!=='yes'&&D.sx.swr!=='yes')h+='</div><div style="background:var(--warn-bg);border:2px solid var(--warn);border-radius:10px;padding:14px;margin-top:12px;text-align:center"><p style="font-size:14px;font-weight:700;color:var(--ng);line-height:1.7">ノルレボの服用は可能ですが、他の性交により妊娠が成立している可能性は否定できません。</p>';
   if(D.pr)h+='</div><div style="background:var(--ng-bg);border:2px solid var(--ng);border-radius:10px;padding:14px;margin-top:12px;text-align:center"><p style="font-size:16px;font-weight:700;color:var(--ng)">🔬 妊娠検査が必要です</p><p style="font-size:12px;color:var(--txs);margin-top:6px;line-height:1.6">現在妊娠している可能性を否定する必要があります。<br>事前にご自身で検査するか、薬局にて検査してください（検査薬1本 800円税込）。<br><strong style="color:var(--ng)">※妊娠中はノルレボを服用できません（添付文書上、禁忌）。</strong></p>';
@@ -356,20 +384,23 @@ async function submit(){
   const elapsed=Date.now()-startTime;
   if(elapsed<10000){alert('入力が早すぎます。もう一度お試しください。');ovl.classList.remove('on');return;}
 
-  const visitTime=document.getElementById('visitTime').value||'';
+  const visitTime1=document.getElementById('visitTime1').value||'';
+  const visitTime2=document.getElementById('visitTime2').value||'';
+  const visitTime3=document.getElementById('visitTime3').value||'';
+  const phone=document.getElementById('uPhone').value.trim();
   const payload={
-    name, visitTime, signature:sig, age:D.age,
+    name, phone, visitTime1, visitTime2, visitTime3, signature:sig, age:D.age,
     periodDate:D.pd, periodCycle:D.pc, periodAmt:D.pa,
     sex3w:D.sx.s3w, sex3o:D.sx.s3o, sexWorry:D.sx.swr,
     priorUse:D.pu, nursing:D.nursing, japan:D.jp,
     cautions:D.ct, pregRisk:D.pr,
-    _key:SEC_KEY, _ts:elapsed
+    _tk:FORM_TOKEN, _ts:elapsed
   };
 
   let rcpId='EC-'+Date.now().toString(36).toUpperCase();
 
   try{
-    if(GAS_URL && GAS_URL!=='https://toru3737.github.io/ec-checker/'){
+    if(GAS_URL && GAS_URL.indexOf('AKfycb')>=0){
       await fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'text/plain'},mode:'no-cors'});
     }
   }catch(e){console.warn('GAS送信エラー:',e)}
@@ -402,7 +433,7 @@ async function submit(){
 
 function restart(){D={nursing:false,age:'',ct:[],sx:{},pr:false,pu:false,jp:true,pd:'',pc:'',pa:''};hasSig=false;
 document.querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=false);
-document.querySelectorAll('input[type=date],input[type=text]').forEach(i=>i.value='');
+document.querySelectorAll('input[type=date],input[type=text],input[type=datetime-local]').forEach(i=>i.value='');
 document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
 document.querySelectorAll('.sx').forEach(b=>{b.classList.remove('chosen','sel')});
 document.getElementById('sxN').disabled=true;document.getElementById('subBtn').disabled=true;
